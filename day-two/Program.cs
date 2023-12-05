@@ -2,11 +2,30 @@
 namespace day_two;
 class Program
 {
+    enum Color
+    {
+        Red,
+        Green,
+        Blue
+    }
+
     class GameRound
     {
         public readonly int RoundNumber = 0;
 
-        List<Tuple<string, int>> CubeGroups = new List<Tuple<string, int>>();
+        private readonly struct CubeSelection
+        {
+            public readonly Color Color;
+            public readonly int CubeCount;
+
+            public CubeSelection(Color color, int cubeCount)
+            {
+                Color = color;
+                CubeCount = cubeCount;
+            }
+        }
+
+        readonly List<CubeSelection> CubeGroups = new List<CubeSelection>();
 
         public GameRound(string line)
         {
@@ -15,49 +34,72 @@ class Program
             ReadOnlySpan<char> roundNum = lineSpan["Game ".Length..colonPos];
             RoundNumber = int.Parse(roundNum);
             int moveStart = colonPos + 2;
-            
+
             string[] moves = lineSpan[moveStart..].ToString().Split("; ");
 
             foreach (string move in moves)
             {
                 string[] cubes = move.Split(", ");
+
                 foreach (string cube in cubes)
                 {
                     int spacePos = cube.IndexOf(" ");
                     ReadOnlySpan<char> cubeSpan = cube.AsSpan();
 
                     int cubeCount = int.Parse(cubeSpan[..spacePos]);
-                    string cubeColor = cubeSpan[(spacePos+1)..].ToString();
-                    CubeGroups.Add(new Tuple<string, int> (cubeColor, cubeCount));
+                    ReadOnlySpan<char> cubeColorStr = cubeSpan[(spacePos+1)..];
+                    Color? cubeColor = GetColorFromString(cubeColorStr);
+                    if (cubeColor != null)
+                    {
+                        CubeGroups.Add(new CubeSelection(cubeColor.Value, cubeCount));
+                    }
                 }
             }
         }
 
+        private static Color? GetColorFromString(ReadOnlySpan<char> cubeColor)
+        {
+            if (cubeColor.SequenceEqual("red".AsSpan()))
+            {
+                return Color.Red;
+            }
+            if (cubeColor.SequenceEqual("green".AsSpan()))
+            {
+                return Color.Green;
+            }
+            if (cubeColor.SequenceEqual("blue".AsSpan()))
+            {
+                return Color.Blue;
+            }
+
+            return null;
+        }
+
         public bool IsPossible(int redCount,  int greenCount, int blueCount)
         {
-            foreach (Tuple<string, int> cubes in CubeGroups)
+            foreach (CubeSelection cubes in CubeGroups)
             {
-                switch (cubes.Item1)
+                switch (cubes.Color)
                 {
-                    case "red":
+                    case Color.Red:
                     {
-                        if (cubes.Item2 > redCount)
+                        if (cubes.CubeCount > redCount)
                         {
                             return false;
                         }
                     }
                     break;
-                    case "green":
+                    case Color.Green:
                     {
-                        if (cubes.Item2 > greenCount)
+                        if (cubes.CubeCount > greenCount)
                         {
                             return false;
                         }
                     }
                     break;
-                    case "blue":
+                    case Color.Blue:
                     {
-                        if (cubes.Item2 > blueCount)
+                        if (cubes.CubeCount > blueCount)
                         {
                             return false;
                         }
@@ -75,23 +117,23 @@ class Program
             int minGreens = 0;
             int minBlues = 0;
 
-            foreach (Tuple<string, int> cubes in CubeGroups)
+            foreach (CubeSelection cubes in CubeGroups)
             {
-                switch (cubes.Item1)
+                switch (cubes.Color)
                 {
-                    case "red":
+                    case Color.Red:
                     {
-                        minReds = Math.Max(minReds, cubes.Item2);
+                        minReds = Math.Max(minReds, cubes.CubeCount);
                     }
                     break;
-                    case "green":
+                    case Color.Green:
                     {
-                        minGreens = Math.Max(minGreens, cubes.Item2);
+                        minGreens = Math.Max(minGreens, cubes.CubeCount);
                     }
                     break;
-                    case "blue":
+                    case Color.Blue:
                     {
-                        minBlues = Math.Max(minBlues, cubes.Item2);
+                        minBlues = Math.Max(minBlues, cubes.CubeCount);
                     }
                     break;
                 }
@@ -110,6 +152,7 @@ class Program
         string input = LoadInput("input.txt");
 
         string[] lines = input.Split(Environment.NewLine);
+
         int validGameScore = 0;
         int powersSum = 0;
         foreach (string line in lines)
@@ -121,7 +164,7 @@ class Program
 
             GameRound round = new GameRound(line);
 
-            if (round.IsPossible(12,13,14))
+            if (round.IsPossible(12, 13, 14))
             {
                 validGameScore += round.RoundNumber;
             }
@@ -129,6 +172,7 @@ class Program
             int minimumPower = round.CalculateMinimumPowers();
             powersSum += minimumPower;
         }
+
 
         Console.WriteLine(validGameScore);
         Console.WriteLine(powersSum);
