@@ -72,8 +72,8 @@ for i, card in enumerate(cards):
         if idx >= len(cards):
             break
 
-        copy_card = cards[idx]
-        copy_card.copy_card(card.copy_count)
+        copying_card = cards[idx]
+        copying_card.copy_card(card.copy_count)
 
 sum = 0
 for card in cards:
